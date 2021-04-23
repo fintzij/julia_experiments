@@ -1,0 +1,36 @@
+---
+title: Adventures with Julia
+author: Jon Fintzi
+date: April 22, 2021
+---
+
+# Summary
+
+Here I am, messing around with Julia and writing things down using markdown, which is handled 
+using the `Weave.jl` package.
+
+Let's print out "Hello!" We can say that in different languages.
+
+```julia
+# make an array ways to say hello, then print them out
+greetings = ["Howdy!", "Hola!", "Shalom!"];
+for i in 1:3
+    println("\t", greetings[i])
+end
+```
+
+Julia can populate an array inline, this is called a "comprehension." The typical form for a 
+comprehension is `[f(x) for x in A]`.
+
+
+```julia
+squares = [b^2 for b in 1:10]
+```
+
+We can broadcast a function over an array using ".".
+
+```julia
+# this broadcasts the sqrt function over squares
+sqrt.(squares);
+```
+
