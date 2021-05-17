@@ -703,15 +703,12 @@ f(y|\theta) &= \frac{1}{\theta}\exp\left(\frac{y}{\theta}\right),\ y>0,\ \theta>
 </span><span class='hljl-cs'># look, we can get the parameters, support, rate, and scale of these distributions</span><span class='hljl-t'>
 </span><span class='hljl-n'>dists</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-p'>[</span><span class='hljl-n'>exp1</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>exp2</span><span class='hljl-p'>];</span><span class='hljl-t'>
 </span><span class='hljl-nf'>println</span><span class='hljl-p'>(</span><span class='hljl-s'>&quot;Distribution </span><span class='hljl-se'>\t</span><span class='hljl-s'> Parameters </span><span class='hljl-se'>\t</span><span class='hljl-s'> Support </span><span class='hljl-se'>\t</span><span class='hljl-s'> Scale </span><span class='hljl-se'>\t</span><span class='hljl-s'> Rate&quot;</span><span class='hljl-p'>)</span><span class='hljl-t'>
-</span><span class='hljl-nf'>reshape</span><span class='hljl-p'>([</span><span class='hljl-n'>dists</span><span class='hljl-p'>;</span><span class='hljl-t'> </span><span class='hljl-n'>params</span><span class='hljl-oB'>.</span><span class='hljl-p'>(</span><span class='hljl-n'>dists</span><span class='hljl-p'>);</span><span class='hljl-t'> </span><span class='hljl-p'>((</span><span class='hljl-n'>d</span><span class='hljl-p'>)</span><span class='hljl-oB'>-&gt;</span><span class='hljl-p'>(</span><span class='hljl-nf'>minimum</span><span class='hljl-p'>(</span><span class='hljl-n'>d</span><span class='hljl-p'>),</span><span class='hljl-nf'>maximum</span><span class='hljl-p'>(</span><span class='hljl-n'>d</span><span class='hljl-p'>)))</span><span class='hljl-oB'>.</span><span class='hljl-p'>(</span><span class='hljl-n'>dists</span><span class='hljl-p'>);</span><span class='hljl-t'> </span><span class='hljl-n'>scale</span><span class='hljl-oB'>.</span><span class='hljl-p'>(</span><span class='hljl-n'>dists</span><span class='hljl-p'>);</span><span class='hljl-t'> </span><span class='hljl-n'>rate</span><span class='hljl-oB'>.</span><span class='hljl-p'>(</span><span class='hljl-n'>dists</span><span class='hljl-p'>)],</span><span class='hljl-t'> </span><span class='hljl-nf'>length</span><span class='hljl-p'>(</span><span class='hljl-n'>dists</span><span class='hljl-p'>),</span><span class='hljl-t'> </span><span class='hljl-ni'>5</span><span class='hljl-p'>)</span>
+</span><span class='hljl-nf'>reshape</span><span class='hljl-p'>([</span><span class='hljl-n'>dists</span><span class='hljl-p'>;</span><span class='hljl-t'> </span><span class='hljl-n'>params</span><span class='hljl-oB'>.</span><span class='hljl-p'>(</span><span class='hljl-n'>dists</span><span class='hljl-p'>);</span><span class='hljl-t'> </span><span class='hljl-p'>((</span><span class='hljl-n'>d</span><span class='hljl-p'>)</span><span class='hljl-oB'>-&gt;</span><span class='hljl-p'>(</span><span class='hljl-nf'>minimum</span><span class='hljl-p'>(</span><span class='hljl-n'>d</span><span class='hljl-p'>),</span><span class='hljl-nf'>maximum</span><span class='hljl-p'>(</span><span class='hljl-n'>d</span><span class='hljl-p'>)))</span><span class='hljl-oB'>.</span><span class='hljl-p'>(</span><span class='hljl-n'>dists</span><span class='hljl-p'>);</span><span class='hljl-t'> </span><span class='hljl-n'>scale</span><span class='hljl-oB'>.</span><span class='hljl-p'>(</span><span class='hljl-n'>dists</span><span class='hljl-p'>);</span><span class='hljl-t'> </span><span class='hljl-n'>rate</span><span class='hljl-oB'>.</span><span class='hljl-p'>(</span><span class='hljl-n'>dists</span><span class='hljl-p'>)],</span><span class='hljl-t'> </span><span class='hljl-nf'>length</span><span class='hljl-p'>(</span><span class='hljl-n'>dists</span><span class='hljl-p'>),</span><span class='hljl-t'> </span><span class='hljl-ni'>5</span><span class='hljl-p'>);</span>
 </pre>
 
 
 <pre class="output">
 Distribution 	 Parameters 	 Support 	 Scale 	 Rate
-2×5 Matrix&#123;Any&#125;:
- Exponential&#123;Float64&#125;&#40;θ&#61;1.0&#41;  &#40;1.0,&#41;  &#40;0.0, Inf&#41;  1.0  1.0
- Exponential&#123;Float64&#125;&#40;θ&#61;2.0&#41;  &#40;2.0,&#41;  &#40;0.0, Inf&#41;  2.0  0.5
 </pre>
 
 
@@ -719,19 +716,30 @@ Distribution 	 Parameters 	 Support 	 Scale 	 Rate
 
 
 <pre class='hljl'>
-<span class='hljl-n'>N</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nfB'>1e5</span><span class='hljl-p'>;</span><span class='hljl-t'>
+<span class='hljl-n'>N</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nf'>Int64</span><span class='hljl-p'>(</span><span class='hljl-nfB'>1e5</span><span class='hljl-p'>);</span><span class='hljl-t'> </span><span class='hljl-cs'># note that we need to coerce 1e5 to type Int64</span><span class='hljl-t'>
 
 </span><span class='hljl-n'>samp_exp1</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nf'>rand</span><span class='hljl-p'>(</span><span class='hljl-n'>exp1</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>N</span><span class='hljl-p'>);</span><span class='hljl-t'>
 </span><span class='hljl-n'>samp_exp2</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nf'>rand</span><span class='hljl-p'>(</span><span class='hljl-n'>exp2</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>N</span><span class='hljl-p'>);</span>
 </pre>
 
 
+
+<p>We&#39;ll plot histograms of the samples against their analytic densities.</p>
+
+
+<pre class='hljl'>
+<span class='hljl-nf'>histogram</span><span class='hljl-p'>(</span><span class='hljl-n'>samp_exp1</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>bins</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-ni'>0</span><span class='hljl-oB'>:</span><span class='hljl-nfB'>0.25</span><span class='hljl-oB'>:</span><span class='hljl-ni'>10</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>fillcolor</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-sc'>:blue</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>fillalpha</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nfB'>0.3</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>label</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-s'>&quot;Exponential(1)&quot;</span><span class='hljl-p'>)</span><span class='hljl-t'>
+</span><span class='hljl-nf'>histogram!</span><span class='hljl-p'>(</span><span class='hljl-n'>samp_exp2</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>bins</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-ni'>0</span><span class='hljl-oB'>:</span><span class='hljl-nfB'>0.25</span><span class='hljl-oB'>:</span><span class='hljl-ni'>10</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>fillcolor</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-sc'>:red</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>fillalpha</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nfB'>0.3</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>label</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-s'>&quot;Exponential(2)&quot;</span><span class='hljl-p'>)</span><span class='hljl-t'>
+</span><span class='hljl-nf'>plot</span><span class='hljl-p'>(</span><span class='hljl-n'>x</span><span class='hljl-oB'>=</span><span class='hljl-ni'>0</span><span class='hljl-oB'>:</span><span class='hljl-nfB'>0.1</span><span class='hljl-p'>,</span><span class='hljl-ni'>10</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>y</span><span class='hljl-oB'>=</span><span class='hljl-nf'>pdf</span><span class='hljl-p'>(</span><span class='hljl-n'>exp1</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-ni'>0</span><span class='hljl-oB'>:</span><span class='hljl-nfB'>0.1</span><span class='hljl-p'>,</span><span class='hljl-ni'>10</span><span class='hljl-p'>))</span>
+</pre>
+
+
 <pre class="julia-error">
-ERROR: MethodError: no method matching rand&#40;::Exponential&#123;Float64&#125;, ::Float64&#41;
+ERROR: MethodError: no method matching pdf&#40;::Exponential&#123;Float64&#125;, ::StepRangeLen&#123;Float64, Base.TwicePrecision&#123;Float64&#125;, Base.TwicePrecision&#123;Float64&#125;&#125;, ::Int64&#41;
 Closest candidates are:
-  rand&#40;&#33;Matched::AbstractRNG, ::Any&#41; at /Users/julia/buildbot/worker/package_macos64/build/usr/share/julia/stdlib/v1.6/Random/src/Random.jl:253
-  rand&#40;&#33;Matched::AbstractRNG, ::Any, &#33;Matched::Integer, &#33;Matched::Integer...&#41; at /Users/julia/buildbot/worker/package_macos64/build/usr/share/julia/stdlib/v1.6/Random/src/Random.jl:282
-  rand&#40;&#33;Matched::AbstractRNG, ::Any, &#33;Matched::Tuple&#123;Vararg&#123;Int64, N&#125;&#125; where N&#41; at /Users/julia/buildbot/worker/package_macos64/build/usr/share/julia/stdlib/v1.6/Random/src/Random.jl:279
+  pdf&#40;::UnivariateDistribution&#123;S&#125; where S&lt;:ValueSupport, ::AbstractArray&#41; at deprecated.jl:70
+  pdf&#40;&#33;Matched::MultivariateDistribution&#123;S&#125; where S&lt;:ValueSupport, ::AbstractVector&#123;T&#125; where T&#41; at /Users/fintzijr/.julia/packages/Distributions/UrgkO/src/multivariates.jl:204
+  pdf&#40;::Exponential, &#33;Matched::Real&#41; at /Users/fintzijr/.julia/packages/Distributions/UrgkO/src/univariate/continuous/exponential.jl:68
   ...
 </pre>
 

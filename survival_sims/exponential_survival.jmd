@@ -36,14 +36,17 @@ f(y|\theta) &= \frac{1}{\theta}\exp\left(\frac{y}{\theta}\right),\ y>0,\ \theta>
 $$
 
 ```julia
-exp1 = Exponential(1.0); # exponential with mean 1
-exp2 = Exponential(2.0); # exponential with mean 2
+expdist1 = Exponential(1.0); # exponential with mean 1
+expdist2 = Exponential(2.0); # exponential with mean 2
 
 # look, we can get the parameters, support, rate, and scale of these distributions
-dists = [exp1, exp2];
+dists = [expdist1, expdist2];
 println("Distribution \t Parameters \t Support \t Scale \t Rate")
 reshape([dists; params.(dists); ((d)->(minimum(d),maximum(d))).(dists); scale.(dists); rate.(dists)], length(dists), 5);
 ```
+
+Question: how can we define anonymous functions inside comprehensions? 
+Question: how to insert markdown comments?
 
 Let's sample from the distributions. Julia treats the distribution as an object and executes the actual sampling 
 using the `rand()` function. 
@@ -51,14 +54,36 @@ using the `rand()` function.
 ```julia
 N = Int64(1e5); # note that we need to coerce 1e5 to type Int64
 
-samp_exp1 = rand(exp1, N);
-samp_exp2 = rand(exp2, N);
+samp_exp1 = rand(expdist1, N);
+samp_exp2 = rand(expdist2, N);
+
+# also do stuff like this
+names = ["Jon", "Meghan", "Jason"]
+rand(names)
+
+# question: how to supply samplig weights? 
+# question: how to table the resulting samples?
 ```
 
 We'll plot histograms of the samples against their analytic densities.
 
 ```julia
-histogram(samp_exp1, bins = 0:0.25:10, fillcolor = :blue, fillalpha = 0.3, label = "Exponential(1)")
-histogram!(samp_exp2, bins = 0:0.25:10, fillcolor = :red, fillalpha = 0.3, label = "Exponential(2)")
-plot(x=0:0.1,10, y=pdf(exp1, 0:0.1,10))
+histogram(samp_exp1, normalize=true, bins = 0:0.25:10, fillcolor = :blue, fillalpha = 0.3, label = "Exponential(1)")
+histogram!(samp_exp2, normalize=true, bins = 0:0.25:10, fillcolor = :red, fillalpha = 0.3, label = "Exponential(2)")
+plot(x=0:0.1,10, y=pdf(exp1, 0:0.1,10)) # haven't figured out how to evaluate a pdf
+```
+
+```julia
+# another cool in-place thing
+x = [i for i in 1:10]
+y = sqrt.(x)
+x = sqrt.(x)
+
+x,y = pi,"Jason"
+x
+y
+
+for i in 1:10 
+   sqrt!(x[i])
+end
 ```
