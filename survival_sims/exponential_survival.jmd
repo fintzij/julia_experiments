@@ -1,0 +1,64 @@
+---
+title: Simulating exponential survival times
+author: Jon Fintzi
+date: May 17, 2021
+---
+
+# Summary
+
+We're going to try simulating survival data with exponentially distributed failure times. Bunch of ways to do 
+this:
+
+- Using the `Distributions.jl` package to sample exponential random variates. 
+- Using the inverse CDF method, i.e., sampling Unif(0,1) variates and using the survival function.
+- By integrating an exponential density to get the exponential CDF and then appealing to the previous method.
+- Other algorithms, e.g., uniformization, importance/rejection sampling, MCMC, etc.
+
+We can start, I guess, by loading the packages we think we'll need and setting the RNG seed.
+
+```julia; echo
+# load packages
+using Distributions,Random,Plots,DataFrames
+
+# set the seed
+Random.seed!(52787)
+```
+
+# Simulation using the `Distributions.jl` package
+
+We start by defining an exponential distribution, which in the `Distributions.jl` package is parameterized 
+naturally by its mean, i.e., 
+
+$$
+\begin{align*}
+f(y|\theta) &= \frac{1}{\theta}\exp\left(\frac{y}{\theta}\right),\ y>0,\ \theta>0.
+\end{align*}
+$$
+
+```julia
+exp1 = Exponential(1.0); # exponential with mean 1
+exp2 = Exponential(2.0); # exponential with mean 2
+
+# look, we can get the parameters, support, rate, and scale of these distributions
+dists = [exp1, exp2];
+println("Distribution \t Parameters \t Support \t Scale \t Rate")
+reshape([dists; params.(dists); ((d)->(minimum(d),maximum(d))).(dists); scale.(dists); rate.(dists)], length(dists), 5);
+```
+
+Let's sample from the distributions. Julia treats the distribution as an object and executes the actual sampling 
+using the `rand()` function. 
+
+```julia
+N = Int64(1e5); # note that we need to coerce 1e5 to type Int64
+
+samp_exp1 = rand(exp1, N);
+samp_exp2 = rand(exp2, N);
+```
+
+We'll plot histograms of the samples against their analytic densities.
+
+```julia
+histogram(samp_exp1, bins = 0:0.25:10, fillcolor = :blue, fillalpha = 0.3, label = "Exponential(1)")
+histogram!(samp_exp2, bins = 0:0.25:10, fillcolor = :red, fillalpha = 0.3, label = "Exponential(2)")
+plot(x=0:0.1,10, y=pdf(exp1, 0:0.1,10))
+```
