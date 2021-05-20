@@ -10,7 +10,7 @@ We're going to try simulating survival data with exponentially distributed failu
 this:
 
 - Using the `Distributions.jl` package to sample exponential random variates. 
-- Using the inverse CDF method, i.e., sampling Unif(0,1) variates and using the survival function.
+- Using the inverse CDF method, i.e., sampling Unif(0,1) variates and using the survival function (Crowther and Lambert).
 - By integrating an exponential density to get the exponential CDF and then appealing to the previous method.
 - Other algorithms, e.g., uniformization, importance/rejection sampling, MCMC, etc.
 
