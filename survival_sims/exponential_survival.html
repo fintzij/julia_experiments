@@ -663,7 +663,7 @@ div.title {text-align: center;}
 <ul>
 <li><p>Using the <code>Distributions.jl</code> package to sample exponential random variates. </p>
 </li>
-<li><p>Using the inverse CDF method, i.e., sampling Unif&#40;0,1&#41; variates and using the survival function.</p>
+<li><p>Using the inverse CDF method, i.e., sampling Unif&#40;0,1&#41; variates and using the survival function &#40;Crowther and Lambert&#41;.</p>
 </li>
 <li><p>By integrating an exponential density to get the exponential CDF and then appealing to the previous method.</p>
 </li>
@@ -675,7 +675,7 @@ div.title {text-align: center;}
 
 <pre class='hljl'>
 <span class='hljl-cs'># load packages</span><span class='hljl-t'>
-</span><span class='hljl-k'>using</span><span class='hljl-t'> </span><span class='hljl-n'>Distributions</span><span class='hljl-p'>,</span><span class='hljl-n'>Random</span><span class='hljl-p'>,</span><span class='hljl-n'>Plots</span><span class='hljl-p'>,</span><span class='hljl-n'>DataFrames</span><span class='hljl-t'>
+</span><span class='hljl-k'>using</span><span class='hljl-t'> </span><span class='hljl-n'>Distributions</span><span class='hljl-p'>,</span><span class='hljl-n'>Random</span><span class='hljl-p'>,</span><span class='hljl-n'>Plots</span><span class='hljl-p'>,</span><span class='hljl-n'>DataFrames</span><span class='hljl-p'>,</span><span class='hljl-n'>StatsBase</span><span class='hljl-t'>
 
 </span><span class='hljl-cs'># set the seed</span><span class='hljl-t'>
 </span><span class='hljl-n'>Random</span><span class='hljl-oB'>.</span><span class='hljl-nf'>seed!</span><span class='hljl-p'>(</span><span class='hljl-ni'>52787</span><span class='hljl-p'>)</span>
@@ -697,11 +697,11 @@ f(y|\theta) &= \frac{1}{\theta}\exp\left(\frac{y}{\theta}\right),\ y>0,\ \theta>
 
 
 <pre class='hljl'>
-<span class='hljl-n'>exp1</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nf'>Exponential</span><span class='hljl-p'>(</span><span class='hljl-nfB'>1.0</span><span class='hljl-p'>);</span><span class='hljl-t'> </span><span class='hljl-cs'># exponential with mean 1</span><span class='hljl-t'>
-</span><span class='hljl-n'>exp2</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nf'>Exponential</span><span class='hljl-p'>(</span><span class='hljl-nfB'>2.0</span><span class='hljl-p'>);</span><span class='hljl-t'> </span><span class='hljl-cs'># exponential with mean 2</span><span class='hljl-t'>
+<span class='hljl-n'>expdist1</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nf'>Exponential</span><span class='hljl-p'>(</span><span class='hljl-nfB'>1.0</span><span class='hljl-p'>);</span><span class='hljl-t'> </span><span class='hljl-cs'># exponential with mean 1</span><span class='hljl-t'>
+</span><span class='hljl-n'>expdist2</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nf'>Exponential</span><span class='hljl-p'>(</span><span class='hljl-nfB'>2.0</span><span class='hljl-p'>);</span><span class='hljl-t'> </span><span class='hljl-cs'># exponential with mean 2</span><span class='hljl-t'>
 
 </span><span class='hljl-cs'># look, we can get the parameters, support, rate, and scale of these distributions</span><span class='hljl-t'>
-</span><span class='hljl-n'>dists</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-p'>[</span><span class='hljl-n'>exp1</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>exp2</span><span class='hljl-p'>];</span><span class='hljl-t'>
+</span><span class='hljl-n'>dists</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-p'>[</span><span class='hljl-n'>expdist1</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>expdist2</span><span class='hljl-p'>];</span><span class='hljl-t'>
 </span><span class='hljl-nf'>println</span><span class='hljl-p'>(</span><span class='hljl-s'>&quot;Distribution </span><span class='hljl-se'>\t</span><span class='hljl-s'> Parameters </span><span class='hljl-se'>\t</span><span class='hljl-s'> Support </span><span class='hljl-se'>\t</span><span class='hljl-s'> Scale </span><span class='hljl-se'>\t</span><span class='hljl-s'> Rate&quot;</span><span class='hljl-p'>)</span><span class='hljl-t'>
 </span><span class='hljl-nf'>reshape</span><span class='hljl-p'>([</span><span class='hljl-n'>dists</span><span class='hljl-p'>;</span><span class='hljl-t'> </span><span class='hljl-n'>params</span><span class='hljl-oB'>.</span><span class='hljl-p'>(</span><span class='hljl-n'>dists</span><span class='hljl-p'>);</span><span class='hljl-t'> </span><span class='hljl-p'>((</span><span class='hljl-n'>d</span><span class='hljl-p'>)</span><span class='hljl-oB'>-&gt;</span><span class='hljl-p'>(</span><span class='hljl-nf'>minimum</span><span class='hljl-p'>(</span><span class='hljl-n'>d</span><span class='hljl-p'>),</span><span class='hljl-nf'>maximum</span><span class='hljl-p'>(</span><span class='hljl-n'>d</span><span class='hljl-p'>)))</span><span class='hljl-oB'>.</span><span class='hljl-p'>(</span><span class='hljl-n'>dists</span><span class='hljl-p'>);</span><span class='hljl-t'> </span><span class='hljl-n'>scale</span><span class='hljl-oB'>.</span><span class='hljl-p'>(</span><span class='hljl-n'>dists</span><span class='hljl-p'>);</span><span class='hljl-t'> </span><span class='hljl-n'>rate</span><span class='hljl-oB'>.</span><span class='hljl-p'>(</span><span class='hljl-n'>dists</span><span class='hljl-p'>)],</span><span class='hljl-t'> </span><span class='hljl-nf'>length</span><span class='hljl-p'>(</span><span class='hljl-n'>dists</span><span class='hljl-p'>),</span><span class='hljl-t'> </span><span class='hljl-ni'>5</span><span class='hljl-p'>);</span>
 </pre>
@@ -712,35 +712,89 @@ Distribution 	 Parameters 	 Support 	 Scale 	 Rate
 </pre>
 
 
+<h2>Brief interlude</h2>
+<p>Question: how can we define anonymous functions inside comprehensions? </p>
+
+
+<pre class='hljl'>
+<span class='hljl-cs'># like this</span><span class='hljl-t'>
+</span><span class='hljl-n'>s</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-p'>[</span><span class='hljl-n'>x</span><span class='hljl-oB'>^</span><span class='hljl-ni'>2</span><span class='hljl-t'> </span><span class='hljl-k'>for</span><span class='hljl-t'> </span><span class='hljl-n'>x</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-ni'>1</span><span class='hljl-oB'>:</span><span class='hljl-ni'>10</span><span class='hljl-p'>]</span><span class='hljl-t'>
+</span><span class='hljl-n'>m</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-p'>[</span><span class='hljl-n'>x</span><span class='hljl-oB'>*</span><span class='hljl-n'>y</span><span class='hljl-t'> </span><span class='hljl-k'>for</span><span class='hljl-t'> </span><span class='hljl-n'>x</span><span class='hljl-t'> </span><span class='hljl-kp'>in</span><span class='hljl-t'> </span><span class='hljl-ni'>1</span><span class='hljl-oB'>:</span><span class='hljl-ni'>10</span><span class='hljl-t'> </span><span class='hljl-k'>for</span><span class='hljl-t'> </span><span class='hljl-n'>y</span><span class='hljl-t'> </span><span class='hljl-kp'>in</span><span class='hljl-t'> </span><span class='hljl-ni'>10</span><span class='hljl-oB'>:-</span><span class='hljl-ni'>1</span><span class='hljl-oB'>:</span><span class='hljl-ni'>1</span><span class='hljl-p'>]</span>
+</pre>
+
+
+<pre class="output">
+100-element Vector&#123;Int64&#125;:
+ 10
+  9
+  8
+  7
+  6
+  5
+  4
+  3
+  2
+  1
+  ⋮
+ 90
+ 80
+ 70
+ 60
+ 50
+ 40
+ 30
+ 20
+ 10
+</pre>
+
+
+<p>Question: how to insert comments in Weave documents? Answer: Just like regular markdown comments, see <a href="https://alvinalexander.com/technology/markdown-comments-syntax-not-in-generated-output/">here</a></p>
 <p>Let&#39;s sample from the distributions. Julia treats the distribution as an object and executes the actual sampling  using the <code>rand&#40;&#41;</code> function. </p>
 
 
 <pre class='hljl'>
 <span class='hljl-n'>N</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nf'>Int64</span><span class='hljl-p'>(</span><span class='hljl-nfB'>1e5</span><span class='hljl-p'>);</span><span class='hljl-t'> </span><span class='hljl-cs'># note that we need to coerce 1e5 to type Int64</span><span class='hljl-t'>
 
-</span><span class='hljl-n'>samp_exp1</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nf'>rand</span><span class='hljl-p'>(</span><span class='hljl-n'>exp1</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>N</span><span class='hljl-p'>);</span><span class='hljl-t'>
-</span><span class='hljl-n'>samp_exp2</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nf'>rand</span><span class='hljl-p'>(</span><span class='hljl-n'>exp2</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>N</span><span class='hljl-p'>);</span>
+</span><span class='hljl-n'>samp_exp1</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nf'>rand</span><span class='hljl-p'>(</span><span class='hljl-n'>expdist1</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>N</span><span class='hljl-p'>);</span><span class='hljl-t'>
+</span><span class='hljl-n'>samp_exp2</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nf'>rand</span><span class='hljl-p'>(</span><span class='hljl-n'>expdist2</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>N</span><span class='hljl-p'>);</span><span class='hljl-t'>
+
+</span><span class='hljl-cs'># also do stuff like this</span><span class='hljl-t'>
+</span><span class='hljl-n'>names</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-p'>[</span><span class='hljl-s'>&quot;Jon&quot;</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-s'>&quot;Meghan&quot;</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-s'>&quot;Jason&quot;</span><span class='hljl-p'>]</span><span class='hljl-t'>
+</span><span class='hljl-nf'>rand</span><span class='hljl-p'>(</span><span class='hljl-n'>names</span><span class='hljl-p'>)</span><span class='hljl-t'>     </span><span class='hljl-cs'># unweighted sample using the base rand() function</span><span class='hljl-t'>
+
+</span><span class='hljl-cs'># question: how to supply samplig weights? Use sample() from the StatsBase package</span><span class='hljl-t'>
+</span><span class='hljl-cs'># question: how to table the resulting samples? use counts() from StatsBase</span><span class='hljl-t'>
+
+</span><span class='hljl-cs'># suppose we want to sample names weighting by how many letters per name</span><span class='hljl-t'>
+</span><span class='hljl-n'>nchars</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-n'>length</span><span class='hljl-oB'>.</span><span class='hljl-p'>(</span><span class='hljl-n'>names</span><span class='hljl-p'>);</span><span class='hljl-t'> </span><span class='hljl-cs'># count characters</span><span class='hljl-t'>
+</span><span class='hljl-n'>name_samps</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nf'>sample</span><span class='hljl-p'>(</span><span class='hljl-n'>names</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-nf'>Weights</span><span class='hljl-p'>(</span><span class='hljl-n'>nchars</span><span class='hljl-p'>),</span><span class='hljl-t'> </span><span class='hljl-ni'>10000</span><span class='hljl-p'>);</span><span class='hljl-t'>
+</span><span class='hljl-nf'>countmap</span><span class='hljl-p'>(</span><span class='hljl-n'>name_samps</span><span class='hljl-p'>)</span><span class='hljl-t'> </span><span class='hljl-cs'># counts() is for integer values and countmap is for arbitrary values</span><span class='hljl-t'>
+</span><span class='hljl-nf'>proportionmap</span><span class='hljl-p'>(</span><span class='hljl-n'>name_samps</span><span class='hljl-p'>)</span><span class='hljl-t'> </span><span class='hljl-cs'># proportios is for integer values, proportionmap for arbitrary values</span><span class='hljl-t'>
+</span><span class='hljl-n'>nchars</span><span class='hljl-t'> </span><span class='hljl-oB'>/</span><span class='hljl-t'> </span><span class='hljl-nf'>sum</span><span class='hljl-p'>(</span><span class='hljl-n'>nchars</span><span class='hljl-p'>)</span><span class='hljl-t'> </span><span class='hljl-cs'># true proportions</span>
 </pre>
 
 
+<pre class="output">
+3-element Vector&#123;Float64&#125;:
+ 0.21428571428571427
+ 0.42857142857142855
+ 0.35714285714285715
+</pre>
 
+
+<h2>Back to simulating survival data</h2>
 <p>We&#39;ll plot histograms of the samples against their analytic densities.</p>
 
 
 <pre class='hljl'>
-<span class='hljl-nf'>histogram</span><span class='hljl-p'>(</span><span class='hljl-n'>samp_exp1</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>bins</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-ni'>0</span><span class='hljl-oB'>:</span><span class='hljl-nfB'>0.25</span><span class='hljl-oB'>:</span><span class='hljl-ni'>10</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>fillcolor</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-sc'>:blue</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>fillalpha</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nfB'>0.3</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>label</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-s'>&quot;Exponential(1)&quot;</span><span class='hljl-p'>)</span><span class='hljl-t'>
-</span><span class='hljl-nf'>histogram!</span><span class='hljl-p'>(</span><span class='hljl-n'>samp_exp2</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>bins</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-ni'>0</span><span class='hljl-oB'>:</span><span class='hljl-nfB'>0.25</span><span class='hljl-oB'>:</span><span class='hljl-ni'>10</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>fillcolor</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-sc'>:red</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>fillalpha</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nfB'>0.3</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>label</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-s'>&quot;Exponential(2)&quot;</span><span class='hljl-p'>)</span><span class='hljl-t'>
-</span><span class='hljl-nf'>plot</span><span class='hljl-p'>(</span><span class='hljl-n'>x</span><span class='hljl-oB'>=</span><span class='hljl-ni'>0</span><span class='hljl-oB'>:</span><span class='hljl-nfB'>0.1</span><span class='hljl-p'>,</span><span class='hljl-ni'>10</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>y</span><span class='hljl-oB'>=</span><span class='hljl-nf'>pdf</span><span class='hljl-p'>(</span><span class='hljl-n'>exp1</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-ni'>0</span><span class='hljl-oB'>:</span><span class='hljl-nfB'>0.1</span><span class='hljl-p'>,</span><span class='hljl-ni'>10</span><span class='hljl-p'>))</span>
+<span class='hljl-nf'>histogram</span><span class='hljl-p'>(</span><span class='hljl-n'>samp_exp1</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>normalize</span><span class='hljl-oB'>=</span><span class='hljl-kc'>true</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>bins</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-ni'>0</span><span class='hljl-oB'>:</span><span class='hljl-nfB'>0.25</span><span class='hljl-oB'>:</span><span class='hljl-ni'>10</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>fillcolor</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-sc'>:blue</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>fillalpha</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nfB'>0.3</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>label</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-s'>&quot;Exponential(1)&quot;</span><span class='hljl-p'>)</span><span class='hljl-t'>
+</span><span class='hljl-nf'>histogram!</span><span class='hljl-p'>(</span><span class='hljl-n'>samp_exp2</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>normalize</span><span class='hljl-oB'>=</span><span class='hljl-kc'>true</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>bins</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-ni'>0</span><span class='hljl-oB'>:</span><span class='hljl-nfB'>0.25</span><span class='hljl-oB'>:</span><span class='hljl-ni'>10</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>fillcolor</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-sc'>:red</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>fillalpha</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-nfB'>0.3</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>label</span><span class='hljl-t'> </span><span class='hljl-oB'>=</span><span class='hljl-t'> </span><span class='hljl-s'>&quot;Exponential(2)&quot;</span><span class='hljl-p'>)</span><span class='hljl-t'>
+</span><span class='hljl-nf'>plot</span><span class='hljl-p'>(</span><span class='hljl-n'>x</span><span class='hljl-oB'>=</span><span class='hljl-ni'>0</span><span class='hljl-oB'>:</span><span class='hljl-nfB'>0.1</span><span class='hljl-p'>,</span><span class='hljl-ni'>10</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-n'>y</span><span class='hljl-oB'>=</span><span class='hljl-nf'>pdf</span><span class='hljl-p'>(</span><span class='hljl-n'>exp1</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-ni'>0</span><span class='hljl-oB'>:</span><span class='hljl-nfB'>0.1</span><span class='hljl-p'>,</span><span class='hljl-ni'>10</span><span class='hljl-p'>))</span><span class='hljl-t'> </span><span class='hljl-cs'># haven&#39;t figured out how to evaluate a pdf</span>
 </pre>
 
 
 <pre class="julia-error">
-ERROR: MethodError: no method matching pdf&#40;::Exponential&#123;Float64&#125;, ::StepRangeLen&#123;Float64, Base.TwicePrecision&#123;Float64&#125;, Base.TwicePrecision&#123;Float64&#125;&#125;, ::Int64&#41;
-Closest candidates are:
-  pdf&#40;::UnivariateDistribution&#123;S&#125; where S&lt;:ValueSupport, ::AbstractArray&#41; at deprecated.jl:70
-  pdf&#40;&#33;Matched::MultivariateDistribution&#123;S&#125; where S&lt;:ValueSupport, ::AbstractVector&#123;T&#125; where T&#41; at /Users/fintzijr/.julia/packages/Distributions/UrgkO/src/multivariates.jl:204
-  pdf&#40;::Exponential, &#33;Matched::Real&#41; at /Users/fintzijr/.julia/packages/Distributions/UrgkO/src/univariate/continuous/exponential.jl:68
-  ...
+ERROR: UndefVarError: exp1 not defined
 </pre>
 
 
@@ -749,7 +803,7 @@ Closest candidates are:
         <div class="footer">
           <p>
             Published from <a href="exponential_survival.jmd">exponential_survival.jmd</a>
-            using <a href="http://github.com/JunoLab/Weave.jl">Weave.jl</a> v0.10.7 on 2021-05-17.
+            using <a href="http://github.com/JunoLab/Weave.jl">Weave.jl</a> v0.10.7 on 2021-05-20.
           </p>
         </div>
       </div>
