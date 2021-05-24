@@ -6,4 +6,3 @@ using Weave
 
 # weave markdown document
 weave("exponential_survival.jmd")
-

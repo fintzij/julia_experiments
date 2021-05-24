@@ -87,6 +87,7 @@ samp_exp1 = rand(expdist1, N);
 samp_exp2 = rand(expdist2, N);
 
 # evaluate densities
+# these are tuples (like lists), created by using a comma
 dens1 = (x=0:0.1:10, y=pdf(expdist1,0:0.1:10));
 dens2 = (x=0:0.1:10, y=pdf(expdist2,0:0.1:10));
 
