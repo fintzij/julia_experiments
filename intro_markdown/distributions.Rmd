@@ -1,0 +1,478 @@
+---
+title: Simulating exponential survival times
+---
+
+We're going to try simulating survival data with exponentially distributed failure times. Bunch of ways to do 
+this:
+
+- Using the `Distributions.jl` package to sample exponential random variates. 
+- Using the inverse CDF method, i.e., sampling Unif(0,1) variates and using the survival function (Crowther and Lambert).
+- By integrating an exponential density to get the exponential CDF and then appealing to the previous method.
+- Other algorithms, e.g., uniformization, importance/rejection sampling, MCMC, etc.
+
+notes from 25th May 2021:
+
+### Environment
+
+Julia can be run from JUPYTER notebooks ('JU')
+
+Install JULIA (https://julialang.org/downloads/) and install packages for JULIA JUPYTER: https://datatofish.com/add-julia-to-jupyter/
+
+I ran this from the Julia REPL but there are many other options...
+import Pkg
+using Pkg
+Pkg.add("IJulia")
+
+Then start a JUPYTER notebook and select language -> Julia (version)
+Example JUPYTER notebook include
+There are some differences in code (eg: scoping) between JUPYTER and Rstudio (detailed in code)
+
+Julia can be run from Rstudio in Rnotebook
+https://github.com/Non-Contradiction/JuliaCall
+
+In Rstudio: 
+```{r}
+#install.packages("JuliaCall")
+library(JuliaCall)
+julia_setup(JULIA_HOME = 'C:/Users/hartwickma/AppData/Local/Programs/Julia-1.6.1/bin/') #specific to where your Julia installed
+julia <- julia_setup()
+library(tidyverse)
+
+#plot theme
+mytheme <- theme(
+  panel.border = element_blank(),
+  panel.grid.major = element_line(color = 'grey60', linetype = 'dashed',
+                                  size = 0.5),
+  panel.grid.minor = element_blank(),
+  panel.background = element_rect(colour = "white", fill = "white"),
+  legend.position = "right", axis.line = element_line(colour = "white"),
+  legend.key = element_rect(fill = NA),
+  legend.text.align = 0,
+  text = element_text(color = 'grey5'),
+  axis.text.x = element_text(colour = "grey5", size = 10),
+  axis.text.y = element_text(colour = "grey5", size = 10,),
+  axis.ticks = element_line(colour = "grey5"),
+  title = element_text(colour = 'grey5', size = 10))
+```
+
+Now you're ready to run Julia from JUPYTER notebook or Rnotebook (Rmarkdown works too...different discussion)
+
+Visual studio documentation: ?
+
+
+### Rstudio Rnotebook
+
+quick Rnotebook shortcuts: 
+ctrl + alt + I to insert code chunks
+ctrl + shitft + enter to execute code chunk
+
+test that julia can be found in rstudio
+
+```{julia}
+
+println("Hello world (in Julia from an Rnotebook...)")
+
+```
+#### set up environment to work with distributions and plotting
+
+
+```{julia}
+import Pkg
+Pkg.add("Distributions")
+Pkg.add("Random")
+Pkg.add("Plots")
+Pkg.add("GR")
+Pkg.add("DataFrames")
+
+```
+
+#### background
+In R:
+p for "probability", the cumulative distribution function (c. d. f.)
+q for "quantile", the inverse c. d. f.
+d for "density", the density function (p. f. or p. d. f.)
+r for "random", a random variable having the specified distribution
+
+
+Distribution	        Functions
+Beta	               pbeta	qbeta	dbeta	rbeta
+Binomial	           pbinom	qbinom	dbinom	rbinom
+Cauchy	             pcauchy	qcauchy	dcauchy	rcauchy
+Chi-Square	         pchisq	qchisq	dchisq	rchisq
+Exponential	         pexp	qexp	dexp	rexp
+F	                   pf	qf	df	rf
+Gamma	               pgamma	qgamma	dgamma	rgamma
+Geometric	           pgeom	qgeom	dgeom	rgeom
+Hypergeometric	     phyper	qhyper	dhyper	rhyper
+Logistic	           plogis	qlogis	dlogis	rlogis
+Log Normal	         plnorm	qlnorm	dlnorm	rlnorm
+Negative Binomial	   pnbinom	qnbinom	dnbinom	rnbinom
+Normal	             pnorm	qnorm	dnorm	rnorm
+Poisson	             ppois	qpois	dpois	rpois
+Student t	           pt	qt	dt	rt
+Studentized Range	   ptukey	qtukey	dtukey	rtukey
+Uniform	             punif	qunif	dunif	runif
+Weibull	             pweibull	qweibull	dweibull	rweibull
+Wilcoxon Rank Sum Statistic	pwilcox	qwilcox	dwilcox	rwilcox
+Wilcoxon Signed Rank Statistic	psignrank	qsignrank	dsignrank	rsignrank
+
+
+generate n random numbers from a normal distribution with given mean & st. dev.
+http://uc-r.github.io/generating_random_numbers/#normal
+rnorm(n, mean = 0, sd = 1)    
+
+generate CDF probabilities for value(s) in vector q 
+pnorm(q, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)    
+
+generate quantile for probabilities in vector p (inverse cdf)
+qnorm(p, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)    
+
+generate density function probabilites for value(s) in vector x
+dnorm(x, mean = 0, sd = 1)  
+
+```{r}
+set.seed(600)
+x <- rnorm(100, mean = 0, sd = 1)
+x
+x %>%
+  as_tibble() %>%
+  ggplot(., aes(value)) +
+  geom_histogram(bins = 10) +
+  mytheme
+```
+
+
+```{r}
+p_x <- pnorm(x, mean = 0, sd = 1)
+t <- cbind(X = x, cdf = p_x)
+head(t)
+t %>%
+  as_tibble() %>%
+  ggplot(., aes(x=X, y = cdf)) +
+  geom_line() +
+  mytheme
+
+```
+
+
+```{r}
+# usage: the probability of a value given mean and sd
+dnorm(27.4, mean=0, sd=1)
+# or
+d_x <- dnorm(x, mean = 0, sd = 1)
+t <- cbind(t, pdf = d_x)
+head(t)
+t %>%
+  as_tibble() %>%
+  ggplot(., aes(x=X, y = pdf)) +
+  geom_line() +
+  mytheme
+```
+
+
+```{r}
+#returns the quantile with the specified probability given mean and st  
+#inverse cdf
+i <- qnorm(0.95, mean=0, sd=1)
+label <- print(paste('95% of values in x', '\n', 'are less than', round(i,3)))
+
+t %>%
+  as_tibble() %>%
+  ggplot(., aes(x=X)) +
+  geom_line(aes(y = cdf), color = 'green') +
+  geom_line(aes(y = pdf), color = 'skyblue1') +
+  geom_vline(xintercept = i, color = 'red', linetype = 2) +
+  annotate('text', label = label, x = 1, y = 0.5, color = 'grey10') +
+  ylab('probability') +
+  mytheme
+
+```
+
+
+```{r}
+#so...create a vector of quantiles given their probability (inverse cdf)
+t <- t %>%
+  as_tibble() %>%
+  mutate(i_cdf = qnorm(pdf, mean=0, sd=1))
+
+t %>%
+  as_tibble() %>%
+  ggplot(., aes(x=X)) +
+  geom_col(aes(y= i_cdf), color = 'red', linetype = 2) +
+  mytheme
+```
+
+So in exponential distribution:
+
+generate a vector of length n with rate = 1
+rexp(n, rate = 1)   
+
+generate CDF probabilities for value(s) in vector q when rate = 4.
+pexp(q, rate = 1)   
+
+generate quantile for probabilities in vector p when rate = 4.
+qexp(p, rate = 1)   
+
+generate density function probabilites for value(s) in vector x when rate = 4.
+p <- dexp(x, rate = 1) 
+
+#### To simulate failure time given a probabilty (create x):
+
+```{r}
+
+survival_df <- function(N, distribution,...){
+#create a vector of survival times for n individuals choice of distribution
+
+#step one: seq of individuals
+individual <-seq(1:N) #
+
+#distribution (normal, exp, wilcox)
+ x <- if (distribution == 'exponential' | distribution == 'exp') {rexp(N)
+                                  } else if (distribution == 'wilcox') {rwilcox(N)
+                                  } else if (distribution == 'normal') {rnorm(N)
+                                  }
+
+pdf <- numeric()
+for(i in x){pdf <- c(pdf, if(distribution == 'exponential' | distribution == 'exp') {dexp(i)
+                                  } else if (distribution == 'wilcox') {dwilcox(i)
+                                  } else if (distribution == 'normal') {dnorm(i)
+                                  })
+}
+
+
+i_cdf = numeric()
+for(i in pdf){i_cdf <- c(i_cdf, if(distribution == 'exponential' | distribution == 'exp') {qexp(i)
+                                  } else if (distribution == 'wilcox') {qwilcox(i)
+                                  } else if (distribution == 'normal') {qnorm(i)
+                                  })
+}
+
+
+df <- cbind(individual,x, pdf, i_cdf)
+df<-as.data.frame(df)
+return(df)
+}
+
+```
+
+```{r}
+survival_df(N = 15, distribution = 'exp') %>% 
+  ggplot(., aes(x = x)) + 
+  geom_line(aes(y = i_cdf)) +
+  geom_col(aes(y = i_cdf, fill = as.character(individual))) +
+  mytheme
+
+```
+```{r}
+z <- 1-pexp(2)
+print(paste('given the sample, probability of survival past 2 is less than', round(z,2)))
+```
+
+### In Julia
+
+```{julia}
+
+#q - what does '!' do here?
+
+#resources: https://www.youtube.com/watch?v=vUA2NzgzH_g
+
+using Distributions
+using Random
+Random.seed!(1234)
+rand(2)
+#sequences
+#The collect() is an inbuilt function in julia which is used to return an array of all items in the specified collection or iterator.
+#you can use the range() function, which allows you to specify the length, step size, or both
+collect(range(0, stop = 5, length = 3))
+
+#logccdf(d::UnivariateDistribution, x::Real)
+
+```
+
+```{julia}
+#generate a sequence of numbers
+collect(range(0, stop = 5, length = 3) )
+```
+
+```{julia}
+randn(10)
+```
+```{julia}
+#oops accidentally overwrote randexp
+randexp = 10
+```
+
+```{julia}
+#functionality can be restored by resetting, use the corresponding package or 'Base' preceeding
+#https://stackoverflow.com/questions/65902105/how-to-reset-any-function-in-julia-to-its-original-state
+randexp = Random.randexp
+randexp(10)
+```
+
+```{julia}
+
+# generate n random numbers from a normal distribution with given mean & st. dev.
+# for norm and exp, there are built ins
+Random.randn(10)   #normal distribution
+Random.randexp(10)    #exponential distribution
+```
+
+https://juliastats.org/Distributions.jl/v0.14/univariate.html
+
+Arcsine(a, b)
+Beta(𝛼, 𝛽)
+BetaPrime(𝛼, 𝛽)
+Cauchy(𝜇, 𝜎)
+Chi(𝜈)
+Chisq(𝜈)
+Erlang(𝛼, 𝜃)
+Exponential(b) # Exponential distribution with scale b
+FDist(𝜈1, 𝜈2)
+Frechet(𝛼, 𝜃)
+Gamma(𝛼, 𝜃)
+GeneralizedExtremeValue(𝜇, 𝜎, 𝜉)
+Gumbel() # Gumbel distribution with zero location and unit scale, i.e. Gumbel(0.0, 1.0)
+InverseGamma() # Inverse Gamma distribution with unit shape and unit scale, i.e. InverseGamma(1.0, 1.0)
+InverseGaussian() # Inverse Gaussian distribution with unit mean and unit shape, i.e. InverseGaussian(1.0, 1.0)
+Laplace() # Laplace distribution with zero location and unit scale, i.e. Laplace(0.0, 1.0)
+Levy() # Levy distribution with zero location and unit scale, i.e. Levy(0.0, 1.0)
+LogNormal(𝜇, 𝜎)
+Logistic(𝜇, 𝜃)
+Normal() # standard Normal distribution with zero mean and unit variance
+Pareto() # Pareto distribution with unit shape and unit scale, i.e. Pareto(1.0, 1.0)
+TDist(d) # t-distribution with d degrees of freedom
+TriangularDist(a, b) # Triangular distribution with lower limit a, upper limit b, and mode (a+b)/2
+VonMises(𝜇, 𝜅)
+Weibull(𝛼, 𝜃) #The Weibull distribution with shape 𝛼 and scale 𝜃 has probability density function
+Bernoulli(p) #Bernoulli distribution is parameterized by a success rate p, probability 1-p.
+Binomial(n, p) #A Binomial distribution characterizes the number of successes: n, the number of trials, and p, the probability of success in an individual trial, with the distribution:
+Categorical(p) # Categorical distribution is parameterized by a probability vector p (of length K).
+DiscreteUniform(a, b) #Discrete uniform distribution is over a consecutive sequence of integers between a and b, inclusive.
+Geometric(p) #A Geometric distribution characterizes the number of failures before the first success in a sequence of independent Bernoulli trials with success rate p.
+Hypergeometric(s, f, n) #A Hypergeometric distribution describes the number of successes in n draws without replacement from a finite
+        #population containing s successes and f failures.
+NegativeBinomial(r, p) # Negative binomial distribution with r successes and success rate p
+Poisson(lambda) # Poisson distribution with rate parameter lambda
+PoissonBinomial(p) # Poisson Binomial distribution with success rate vector p
+Skellam(mu1, mu2) # Skellam distribution for the differen
+
+```{julia}
+
+# also how in the Distributions package
+
+d = Distributions.Normal()
+x = Random.rand(d, 100)
+```
+
+
+```{julia}
+x = Random.rand(Distributions.Normal(), 100)
+```
+
+
+```{julia}
+#equivalents
+#https://readthedocs.org/projects/blopmatching/downloads/pdf/latest/
+pdf 
+logpdf
+cdf
+logcdf
+ccdf #The complementary cumulative function evaluated at x, i.e. 1 - cdf(d, x).
+logccdf
+quantile
+cquantile
+invlogcdf
+invlogccdf
+```
+
+```{julia}
+using Plots
+histogram(x)
+
+```
+
+julia equivalents
+https://arxiv.org/pdf/1907.08611.pdf
+R                   Julia
+rnorm(n, mu, sig) = rand(Normal(mu, sig), n)
+dnorm(x, mu, sig) = pdf(Normal(mu, sig), x)
+pnorm(x, mu, sig) = cdf(Normal(mu, sig), x)
+qnorm(p, mu, sig) = quantile(Normal(mu, sig), p)
+
+
+```{julia}
+#Pkg.add("StatsFuns") vs Distributions
+#takes the specified outside of the wrapper but doesnt have all the distributions
+#https://github.com/JuliaStats/StatsFuns.jl
+
+using StatsFuns
+x=rand(Normal(),100)
+y=normpdf.(x)
+z=pdf.(Normal(), x)
+plot(x,z, seriestype = bar)
+```
+
+
+```{julia}
+
+using GR
+
+# a = rand(Normal(mu, sig), n)
+# b = pdf(Normal(mu, sig), x)
+# c = cdf(Normal(mu, sig), x)
+# d = ccdf(Normal(),p)
+# e = quantile(Normal(mu, sig), p)
+
+a = rand(Normal(), 120)
+b = pdf(Normal(), a)
+c = cdf(Normal(), a)
+#d = ccdf(Normal(),b)
+e = quantile(Normal(), 0.95)
+
+#http://docs.juliaplots.org/latest/generated/supported/ 
+plot(a, b, seriestype = :line, label = "pdf")
+plot!(a, c, seriestype = :line, label = "cdf")
+plot!([e], seriestype="vline", label = "i_cdf")
+# t %>%
+#   as_tibble() %>%
+#   ggplot(., aes(x=X)) +
+#   geom_line(aes(y = cdf), color = 'green') +
+#   geom_line(aes(y = pdf), color = 'skyblue1') +
+#   geom_vline(xintercept = i, color = 'red', linetype = 2) +
+#   annotate('text', label = label, x = 1, y = 0.5, color = 'grey10') +
+#   ylab('probability')
+#   mytheme
+```
+
+
+```{julia}
+
+#create a function that wraps cdf etc around the N and plot
+
+function f(x,y)
+           x + y
+       end
+       
+f(2,3)
+```
+
+```{julia}
+using DataFrames
+
+function survival_julia(N, dist)
+  individual = collect(1:N)
+  a = rand(dist, N)
+  b = pdf(dist, a)
+  c = quantile(dist, b)
+  return df = DataFrame(individual = individual,
+                        x = a,
+                        pdf = b,
+                        i_cdf = c)
+  end
+#create DF with any distribution, rate can be specified when appropriate
+s_j = survival_julia(10, Exponential(2))
+
+plot(s_j[:,2], s_j[:,4], seriestype = :line)
+#plot!(s_j[,2], s_j[,], seriestype = :bar, label = "cdf")
+```
+
