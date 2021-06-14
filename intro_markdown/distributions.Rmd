@@ -1,5 +1,8 @@
 ---
 title: Simulating exponential survival times
+output:
+  html_document:
+    code_download: true
 ---
 
 We're going to try simulating survival data with exponentially distributed failure times. Bunch of ways to do 
@@ -474,5 +477,149 @@ s_j = survival_julia(10, Exponential(2))
 
 plot(s_j[:,2], s_j[:,4], seriestype = :line)
 #plot!(s_j[,2], s_j[,], seriestype = :bar, label = "cdf")
+```
+```{r}
+#F^(-1)(u)=(-log(1-u))/θ
+#where u is selected from a uniform distribution between 0 and 1 and theta is the 'rate' (angle)
+set.seed(1)
+exp_icdf <- function(n, theta) {
+  u<-runif(n)
+  i_cdf_new<-(-log(1 - u))/ theta
+  i_cdf_wheel <- qexp(u, rate = theta)
+  df <- as.data.frame(cbind(u, i_cdf_new, i_cdf_wheel))
+  return(df)
+}
+
+exp_icdf(15, 2) -> x
+x
+```
+
+```{julia }
+Random.seed!(1)
+using Random
+
+rand(15)
+```
+
+
+```{julia}
+
+#the rand function in julia creates a uniform distribution between 0 and 1 by default - range can be specified as can n
+#https://www.roelpeters.be/sampling-from-a-specific-distribution-in-julia/
+
+using Random
+
+function icdfExp(u,theta)
+  x = (-log(1 - u))/ theta
+end
+
+a = rand(15)
+d = []
+for i in a
+  #println(icdfExp(i,2))
+  push!(d,icdfExp(i,2))
+end
+
+c = quantile(Exponential(2), a)
+df = DataFrame(a=a, d=d, c=c)
+```
+
+```{julia}
+#Distribution calc for quantile?
+#https://github.com/JuliaStats/Distributions.jl/blob/master/src/univariate/continuous/exponential.jl
+#-xval(d, log1p(-p))
+
+```
+
+
+```{r}
+#https://rdrr.io/cran/cpsurvsim/src/R/weibullfns.R
+set.seed(1)
+
+#this must be the discrete i_cdf?
+
+# weib_icdf <- function(n, gamma, theta) {
+#   if(is.numeric(n) == FALSE | n <= 0) {
+#     stop("n must be an integer greater than 0.")
+#   }
+#   if(is.numeric(theta) == FALSE | is.numeric(gamma) == FALSE |
+#      theta <= 0 | gamma <= 0) {
+#     stop("Theta and gamma must be numeric and > 0.")
+#   }
+#   x <- runif(n)
+#   return(((gamma / theta) * x) ^ (1 / gamma))
+# }
+
+#from wikipedia these are continous then?
+#{\displaystyle Q(p;k,\lambda )=lambda(-ln(1-p))^{1/k}}
+#matlab −a[ln(1−p)]^1/b
+```
+
+
+```{r}
+theta <- 1
+gamma <- 2
+n <- 4
+
+u<-runif(n)
+i_cdf_new<-(theta*(-log(1-u))) ^(1/gamma)
+```
+
+```{r}
+#gamma as shape parameter, theta as rate(scale?) parameter, n draw from uniform distribution between 0 and 1
+replicatedWeibIcdf <- function(n, gamma, theta) {
+  set.seed(1)
+  u<-runif(n)
+  i_cdf_new<-(theta*(-log(1-u))) ^ (1 / gamma)
+  i_cdf_wheel <- qweibull(p = u, shape = gamma, scale = theta)
+  df <- as.data.frame(cbind(u, i_cdf_new, i_cdf_wheel))
+  return(df)
+}
+
+```
+
+```{julia}
+
+#problem with seeds producing different sequences between R and Julia but when same numbers are input our Julia function produces same outcomes as R (our function and quantile function)
+
+using Random
+Random.seed!(1)
+
+function icdfWeib(u,theta, gamma)
+  x = (theta*(-log(1-u))) ^ (1 / gamma)
+end
+
+#a = rand(4)
+a = [0.2655087, 0.3721239, 0.5728534, 0.9082078]
+d = []
+for i in a
+  #println(icdfExp(i,2))
+  push!(d,icdfWeib(i,1,2))
+end
+
+c = quantile(Exponential(2), a) # ignore
+df = DataFrame(a=a, d=d, c=c)
+
+```
+```{r}
+
+#qgamma(p = u, shape = shape, rate = rate)
+
+rGammaicdf <- function(n, shape) {
+  set.seed(1)
+  u<-runif(n)
+  i_cdf_new<-(1/theta*(-log(u)))
+  i_cdf_wheel <- qgamma(u, shape = shape)
+  df <- as.data.frame(cbind(u, i_cdf_new, i_cdf_wheel))
+  return(df)
+}
+
+```
+
+
+```{julia}
+#https://wiki.math.uwaterloo.ca/statwiki/index.php?title=techniques_for_Normal_and_Gamma_Sampling
+#finding this equation was ...fun? xi=−1/λ(log(ui)
+
 ```
 
