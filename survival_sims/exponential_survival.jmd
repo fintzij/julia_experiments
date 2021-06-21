@@ -95,5 +95,9 @@ histogram(samp_exp1, normalize=true, bins = 0:0.25:10, fillcolor = :blue, fillal
 histogram!(samp_exp2, normalize=true, bins = 0:0.25:10, fillcolor = :red, fillalpha = 0.3, label = "Exponential(2), sample")
 
 plot!(dens1[:x], dens1[:y], color = :blue, label = "Exponential(1), analytic")
-plot!(dens2[:x], dens2[:y], color = :red, label = "Exponential(2), analytic")
+plot!(dens2.x, dens2.y, color = "red", label = "Exponential(2), analytic")
 ```
+
+Simulating event times using the `Distributions.jl` package is great and all, but let's do it manually.
+
+We start by simulating 
