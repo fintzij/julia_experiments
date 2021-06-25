@@ -1,0 +1,211 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r}
+library(JuliaCall)
+
+```
+
+```{r}
+exp_cdf <- function(x, lambda){
+  1 - exp(-lambda * x)
+}
+
+# double check to make sure our reinvention is correct
+exp_cdf(x=2, lambda=2)
+pexp(q=2, rate=2)
+
+# this is what the exponential cdf looks like
+plot(seq(0,3,.1), exp_cdf(seq(0,3,.1), lambda=2))
+
+# transform exponential cdf to make more numerically stable
+exp_l_cdf <- function(x, lambda){
+  log1p( - exp(-lambda * x))
+}
+
+# now integrate the density numerically
+exp_l_cdf2 <- function(x1, lambda1) {
+  
+  # return the log cdf
+  log(integrate(dexp, rate = lambda1, lower = 0, upper = x1)$value)
+}
+
+# now make function to simulate draws from exponential distribution
+simtime <- function(par, method = "analytic"){
+  # sample between 0 and 1
+  usamp <- runif(n=1, 0, 1)
+  
+  # objective function
+  if(method == "analytic") {
+    x_obj_fun <- function(x, u=usamp, lambda=par){
+      exp_l_cdf(x, lambda) - log(u)
+    }
+  } else {
+    x_obj_fun <- function(x, u=usamp, lambda=par){
+      exp_l_cdf2(x, lambda) - log(u)
+    }
+  }
+  
+  # SOLVE!
+  uniroot(f=x_obj_fun, interval=c(0,10))$root
+}
+
+
+# sanity check
+simulated_data <- replicate(10000, simtime(par=2, method = "numeric"))
+
+hist(simulated_data, freq = FALSE, breaks=50)
+
+lines(seq(0,4,0.01), dexp(seq(0,4,0.01), rate = 2), col="red")
+
+
+# another sanity check
+simulated_correct_data <- rexp(10000, rate=2)
+hist(simulated_correct_data, freq = FALSE, breaks=seq(0,10,0.1), col="red", add=TRUE)
+```
+
+```{julia}
+
+using Random, Distributions
+
+function exp_cdf_J(x, lambda)
+  y = 1 - exp(-lambda * x)
+  return(y)
+end
+```
+
+```{julia}
+# double check to make sure our reinvention is correct
+# scale(d)           # Get the scale parameter, i.e. θ (theta)
+# rate(d)            # Get the rate parameter, i.e. 1 / θ
+#in distributions package - Exponential takes the scale, so to be equivalent with base::pexp(rate) and our specifications use 1 / theta
+
+exp_cdf_J(2, 2)
+cdf(Exponential(2), 2) #scale
+cdf(Exponential(1/2), 2) #rate
+```
+```{r}
+#R and JUlia behaving the same
+pexp(q=2, rate=2)
+```
+
+```{julia}
+# this is what the exponential cdf looks like (in Julia)
+using Plots
+a = collect(0:.1:3)
+d = []
+for i in a
+  push!(d, exp_cdf_J(i,2))
+end
+
+using Plots
+plot(a,d, seriestype= :scatter, label = "Wheel ExpCDF")
+plot!(a,cdf(Exponential(1/2), a), seriestype = :line, color = :green, label = "package ExpCDF")
+```
+
+```{r}
+#numerically stable
+# transform exponential cdf to make more numerically stable
+
+a <- seq(0,3,.1)
+l <- 2
+
+exp_l_cdf <- function(x, lambda){
+  log1p( - exp(-lambda * x))
+}
+
+exp_cdf <- function(x, lambda){
+  1 - exp(-lambda * x)
+}
+
+exp(exp_l_cdf(a,l)) - exp_cdf(a,l)
+
+```
+```{julia}
+
+#numerically stable Julia
+#https://tamaspapp.eu/post/log1p/
+
+function expCdf_Jstable(x, lambda)
+  y = log1p(- exp(-lambda * x))
+  return(y)
+end
+
+a = expCdf_Jstable(2,2)
+exp(a)
+exp_cdf_J(2,2)
+
+```
+```{r}
+# now integrate the density numerically
+expCdf_Rstable2 <- function(x1, lambda1) {
+  
+  # return the log cdf from the probability density function
+  log(integrate(dexp, rate = lambda1, lower = 0, upper = x1)$value)
+}
+
+exp(expCdf_Rstable2(2,2))
+pexp(2,2)
+```
+
+```{julia}
+#Pkg.add("QuadGK")
+using QuadGK
+#equation for pdf returns the cdf
+integral, err = quadgk(x -> (2*exp(-2 * x)), 0, 2)
+
+cdf(Exponential(1/2), 2)
+
+```
+```{julia}
+# in a formula
+function logCDF_integral(x, lambda)
+  integral, err = quadgk(x -> (lambda*exp(-lambda * x)), 0, 2)
+  return(log(integral))
+end
+
+a=logCDF_integral(2,2)
+exp(a)
+```
+
+
+```{r}
+# now make function to simulate draws from exponential distribution
+simtime <- function(par, method = "analytic"){
+  # sample between 0 and 1
+  usamp <- runif(n=1, 0, 1)
+  
+  # objective function
+  if(method == "analytic") {
+    x_obj_fun <- function(x, u=usamp, lambda=par){
+      exp_l_cdf(x, lambda) - log(u)
+    }
+  } else {
+    x_obj_fun <- function(x, u=usamp, lambda=par){
+      exp_l_cdf2(x, lambda) - log(u)
+    }
+  }
+  
+  # SOLVE!
+  uniroot(f=x_obj_fun, interval=c(0,10))$root
+}
+
+
+# sanity check
+simulated_data <- replicate(10000, simtime(par=2, method = "numeric"))
+
+hist(simulated_data, freq = FALSE, breaks=50)
+
+lines(seq(0,4,0.01), dexp(seq(0,4,0.01), rate = 2), col="red")
+
+
+# another sanity check
+simulated_correct_data <- rexp(10000, rate=2)
+hist(simulated_correct_data, freq = FALSE, breaks=seq(0,10,0.1), col="red", add=TRUE)
+
+```
+
