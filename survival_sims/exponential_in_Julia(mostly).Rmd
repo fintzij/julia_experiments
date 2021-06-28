@@ -140,6 +140,8 @@ exp(a)
 exp_cdf_J(2,2)
 
 ```
+
+
 ```{r}
 # now integrate the density numerically
 expCdf_Rstable2 <- function(x1, lambda1) {
@@ -161,6 +163,7 @@ integral, err = quadgk(x -> (2*exp(-2 * x)), 0, 2)
 cdf(Exponential(1/2), 2)
 
 ```
+
 ```{julia}
 # in a formula
 function logCDF_integral(x, lambda)
@@ -172,74 +175,91 @@ a=logCDF_integral(2,2)
 exp(a)
 ```
 ```{julia}
-
-simtime <- function(par, method = "analytic"){
-  # sample between 0 and 1
-  usamp <- rand(1)
-```
-
-```{julia}
-
 #Pkg.add("Roots")
-
 using Roots
 
 f(x) = exp(x) - x^4
-find_zero(f, (-10, 0))
-
-```
-```{julia}
-
-find_zero(expCdf_Jstable(2, 2), (-10,0))
+a=find_zero(f, (-10, 0))
+f(a)
 ```
 
+
+
 ```{julia}
-function simtime(method)
-usamp = rand(1)
+#reads as vector need to call u from rand specificying first element of vector
+# log(u[1])
+# expCdf_Jstable(2, 2) - log(u[1])
+function x_analytic(x, u, lambda)
+   expCdf_Jstable(x, lambda) - log(u[1])
+   end
+ function x_numerical(x, u, lambda)
+   logCDF_integral(x, lambda) -log(u[1])
+   end
+```
+```{julia}
+x_analytic(2,2,2)
+x_numerical(2,2,2)
+
+```
+
+
+```{julia}
+function simtime(method,lambda)
+  u = rand(1)
   if method == "analytic"
-    #println("analytic")
-    expCdf_Jstable(x, lambda)
+    find_zero(x_analytic, (0,10))
   else
-    #println("other")
-    logCDF_integral(x, lambda)
-    end
+    find_zero(x_numerical, (0,10)) # rootfinder having issues with this function
+  end
 end
 ```
+
+
+```{julia}
+
+simtime("numerical",2)
+```
+
+
 
 
 
 ```{r}
 # now make function to simulate draws from exponential distribution
 simtime <- function(par, method = "analytic"){
-  # sample between 0 and 1
+  #randomly sample from a uniform distribution between 0 and 1 - this value will change
+  #every replication downstream
   usamp <- runif(n=1, 0, 1)
   
   # objective function
   if(method == "analytic") {
     x_obj_fun <- function(x, u=usamp, lambda=par){
-      exp_l_cdf(x, lambda) - log(u)
+      exp_l_cdf(x, lambda) - log(u) #define function for uniroot to explore
     }
   } else {
     x_obj_fun <- function(x, u=usamp, lambda=par){
-      exp_l_cdf2(x, lambda) - log(u)
+      exp_l_cdf2(x, lambda) - log(u) #numerically for when cdf function is not known
     }
   }
   
   # SOLVE!
-  uniroot(f=x_obj_fun, interval=c(0,10))$root
+  uniroot(f=x_obj_fun, interval=c(0,10))$root #this step finds the inverse cdf - for when can't code in the analytic function for i_cdf
 }
 
+```
 
+```{r}
 # sanity check
-simulated_data <- replicate(10000, simtime(par=2, method = "numeric"))
-
+set.seed(123)
+simulated_data <- replicate(100, simtime(par=2, method = "numeric"))
 hist(simulated_data, freq = FALSE, breaks=50)
+
 
 lines(seq(0,4,0.01), dexp(seq(0,4,0.01), rate = 2), col="red")
 
 
 # another sanity check
-simulated_correct_data <- rexp(10000, rate=2)
+simulated_correct_data <- rexp(100, rate=2)
 hist(simulated_correct_data, freq = FALSE, breaks=seq(0,10,0.1), col="red", add=TRUE)
 
 ```
