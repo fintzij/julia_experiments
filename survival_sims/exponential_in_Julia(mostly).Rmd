@@ -171,6 +171,41 @@ end
 a=logCDF_integral(2,2)
 exp(a)
 ```
+```{julia}
+
+simtime <- function(par, method = "analytic"){
+  # sample between 0 and 1
+  usamp <- rand(1)
+```
+
+```{julia}
+
+#Pkg.add("Roots")
+
+using Roots
+
+f(x) = exp(x) - x^4
+find_zero(f, (-10, 0))
+
+```
+```{julia}
+
+find_zero(expCdf_Jstable(2, 2), (-10,0))
+```
+
+```{julia}
+function simtime(method)
+usamp = rand(1)
+  if method == "analytic"
+    #println("analytic")
+    expCdf_Jstable(x, lambda)
+  else
+    #println("other")
+    logCDF_integral(x, lambda)
+    end
+end
+```
+
 
 
 ```{r}
