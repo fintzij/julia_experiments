@@ -159,7 +159,6 @@ pexp(2,2)
 using QuadGK
 #equation for pdf returns the cdf
 integral, err = quadgk(x -> (2*exp(-2 * x)), 0, 2)
-
 cdf(Exponential(1/2), 2)
 
 ```
@@ -184,44 +183,107 @@ f(a)
 ```
 
 
-
 ```{julia}
-#reads as vector need to call u from rand specificying first element of vector
-# log(u[1])
-# expCdf_Jstable(2, 2) - log(u[1])
-function x_analytic(x, u, lambda)
-   expCdf_Jstable(x, lambda) - log(u[1])
-   end
- function x_numerical(x, u, lambda)
-   logCDF_integral(x, lambda) -log(u[1])
-   end
-```
-```{julia}
-x_analytic(2,2,2)
-x_numerical(2,2,2)
 
-```
+#making find_zero recognize lambda and u
+#here's a similar suggestion from stack overflow:
+#https://stackoverflow.com/questions/53824498/finding-univariate-roots-in-julia-of-a-function-with-many-arguments
 
-
-```{julia}
-function simtime(method,lambda)
-  u = rand(1)
-  if method == "analytic"
-    find_zero(x_analytic, (0,10))
-  else
-    find_zero(x_numerical, (0,10)) # rootfinder having issues with this function
-  end
+function a_1(x)
+  3 + x
 end
+
+find_zero(a_1, 1)
+
+###this works nested
+function a_2_root(y)
+    function a_3(x)
+        x + y
+    end
+    find_zero(a_3, 1)
+end
+
+a_2_root(10)
+
+### this works using an anonymous function
+function a_3_root(y)
+    u = rand(1)
+    a_3(x) = x + y + u[1]
+    find_zero(a_3, 1)
+end
+
+a_3_root(1)
+```
+
+
+
+```{julia}
+#  function x_numerical(lambda)
+#    u = rand(1)
+#    #a_3(x) = logCDF_integral(x, lambda) -log(u[1])
+#    #a_3(x) = x + lambda + u[1]
+#    #a_3(x) = quadgk(x -> (lambda*exp(-lambda * x)), 0, 2)
+#    #find_zero(a_3, 3)
+#    end
+#           
+# x_numerical(2)
+```
+
+```{r}
+exp_l_cdf <- function(x, lambda){
+  log1p( - exp(-lambda * x))
+}
+
+# now integrate the density numerically
+exp_l_cdf2 <- function(x1, lambda1) {
+  
+  # return the log cdf
+  log(integrate(dexp, rate = lambda1, lower = 0, upper = x1)$value)
+}
+```
+
+```{julia}
+# u = rand(1)
+# log(cdf(Exponential(1/2),2)) - log(u[1])
+
+f3(x)= log(quadgk(x -> (2*exp(-2 * x)), 0, 2)[1])
+a=f3(10)
+typeof(a)
+typeof(f3)
+find_zero(f3,(0,10))
+
 ```
 
 
 ```{julia}
 
-simtime("numerical",2)
+
+function solver(method, lambda)
+  u = rand(1)
+    if method == "prebuilt"
+      f1(x) = (log(cdf(Exponential(1/lambda),x))) - log(u[1])
+      find_zero(f1,(0,10))
+     elseif method == "analytic"
+       f2(x) = (log1p(-exp(-lambda * x))) -log(u[1])
+       find_zero(f2,(0,10))
+    else
+      f3(x)= quadgk(x -> (lambda*exp(-lambda * x)), 0, 2)[1]
+      find_zero(f3,(0,10))
+      end
+end
+
+solver("prebuilt",2)
+solver("analytic",2)
+#solver("other", 2)
 ```
 
+```{julia}
+f1(x) = (pdf(Exponential(1/2),x))
 
+f1(2)
+find_zero(f1, 1)
 
+```
 
 
 ```{r}
