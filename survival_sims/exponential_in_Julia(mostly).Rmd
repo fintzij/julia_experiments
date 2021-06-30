@@ -242,13 +242,6 @@ f4(x)= (2*exp(-2*x)) #pdf
 f5(x)= log(quadgk(f4, 0, x)[1]) #cdf using integration
 find_zero(f5,3)
 ```
-```{julia}
-
-a=log(quadgk(x -> lambda*exp(-lambda*x), 0, 1)[1]) -log(2)
-typeof(a)
-log
-
-```
 
 
 ```{julia}
