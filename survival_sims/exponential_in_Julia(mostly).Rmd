@@ -216,19 +216,6 @@ a_3_root(1)
 ```
 
 
-
-```{julia}
-#  function x_numerical(lambda)
-#    u = rand(1)
-#    #a_3(x) = logCDF_integral(x, lambda) -log(u[1])
-#    #a_3(x) = x + lambda + u[1]
-#    #a_3(x) = quadgk(x -> (lambda*exp(-lambda * x)), 0, 2)
-#    #find_zero(a_3, 3)
-#    end
-#           
-# x_numerical(2)
-```
-
 ```{r}
 exp_l_cdf <- function(x, lambda){
   log1p( - exp(-lambda * x))
@@ -243,72 +230,109 @@ exp_l_cdf2 <- function(x1, lambda1) {
 ```
 
 ```{julia}
-# u = rand(1)
-# log(cdf(Exponential(1/2),2)) - log(u[1])
+#posted example: https://discourse.julialang.org/t/solve-for-upper-lower-bound-of-a-numerical-definite-integral/58164/25
 
-f3(x)= log(quadgk(x -> (2*exp(-2 * x)), 0, 2)[1])
-a=f3(10)
+f1(x)=5(1-x)^4
+f2(x)=quadgk(f1,0,x)[1]-0.9
+find_zero(f2,0.5)
+```
+
+```{julia}
+f4(x)= (2*exp(-2*x)) #pdf
+f5(x)= log(quadgk(f4, 0, x)[1]) #cdf using integration
+find_zero(f5,3)
+```
+```{julia}
+
+a=log(quadgk(x -> lambda*exp(-lambda*x), 0, 1)[1]) -log(2)
 typeof(a)
-typeof(f3)
-find_zero(f3,(0,10))
+log
 
 ```
 
 
 ```{julia}
-
+#QC check with seed for comparison between methods
+#numerically is obv. not as stable without logs - this is a bug - at the moment add log and find_zero fails to converge because of NaN or in the search for integral method - need to read more in the documentation to overcome this - solution could be in 'quadgk' or 'root' or both....
 
 function solver(method, lambda)
+Random.seed!(1)
   u = rand(1)
-    if method == "prebuilt"
+    if method == "prepackaged"
       f1(x) = (log(cdf(Exponential(1/lambda),x))) - log(u[1])
       find_zero(f1,(0,10))
      elseif method == "analytic"
-       f2(x) = (log1p(-exp(-lambda * x))) -log(u[1])
+       f2(x) = (log1p(-exp(-lambda * x))) - log(u[1])
        find_zero(f2,(0,10))
-    else
-      f3(x)= quadgk(x -> (lambda*exp(-lambda * x)), 0, 2)[1]
-      find_zero(f3,(0,10))
+     else
+       f3(x)= (quadgk(x -> lambda*exp(-lambda*x), 0, x)[1]) - (u[1])
+       find_zero(f3,(0,10))
       end
 end
 
-solver("prebuilt",2)
-solver("analytic",2)
-#solver("other", 2)
+solver("prepackaged",3)
+solver("analytic",3)
+solver("numerically", 3)
+
+```
+```{julia}
+#add replicate feature, for julia for loop is fast as vectorization
+function JsimTime2(n, lambda)
+simdata = []
+for i = 1:n
+  u = rand(1)
+  f1(x) = (log(cdf(Exponential(1/lambda),x))) - log(u[1])
+  y=find_zero(f1,(0,10))
+  push!(simdata,y)
+  end
+  return(simdata)
+end
 ```
 
 ```{julia}
-f1(x) = (pdf(Exponential(1/2),x))
-
-f1(2)
-find_zero(f1, 1)
-
+#what package is this in? this is potential vectorized solution
+#pmap(solver,1:10)
 ```
 
 
-```{r}
-# now make function to simulate draws from exponential distribution
-simtime <- function(par, method = "analytic"){
-  #randomly sample from a uniform distribution between 0 and 1 - this value will change
-  #every replication downstream
-  usamp <- runif(n=1, 0, 1)
-  
-  # objective function
-  if(method == "analytic") {
-    x_obj_fun <- function(x, u=usamp, lambda=par){
-      exp_l_cdf(x, lambda) - log(u) #define function for uniroot to explore
-    }
-  } else {
-    x_obj_fun <- function(x, u=usamp, lambda=par){
-      exp_l_cdf2(x, lambda) - log(u) #numerically for when cdf function is not known
-    }
-  }
-  
-  # SOLVE!
-  uniroot(f=x_obj_fun, interval=c(0,10))$root #this step finds the inverse cdf - for when can't code in the analytic function for i_cdf
-}
-
+```{julia}
+#for now for built function where n can be specified in the call
+function JsimTime(n, lambda, method)
+simdata = []
+for i = 1:n
+  u = rand(1)
+    if method == "prepackaged"
+      f1(x) = (log(cdf(Exponential(1/lambda),x))) - log(u[1])
+      q=find_zero(f1,(0,10))
+     elseif method == "analytic"
+       f2(x) = (log1p(-exp(-lambda * x))) - log(u[1])
+       q=find_zero(f2,(0,10))
+     else
+       f3(x)= (quadgk(x -> lambda*exp(-lambda*x), 0, x)[1]) - (u[1])
+       q=find_zero(f3,(0,10))
+      end
+    push!(simdata,q)
+    end
+  return(simdata)
+end
 ```
+
+```{julia}
+#sanity check julia
+using Plots
+Random.seed!(123)
+simulated_data_P=JsimTime(1000,3, "prepackaged")
+simulated_data_A=JsimTime(1000,3, "analytic")
+simulated_data_N=JsimTime(1000,3, "numerically")
+plot(simulated_data_P, seriestype = :histogram, color = :green,
+     label = "P", linealpha = 0.3, fillalpha = 0.2)
+plot!(simulated_data_A, seriestype= :histogram, color = :blue,
+      label = "A", linealpha = 0.3, fillalpha = 0.2)
+plot!(simulated_data_N, seriestype = :histogram, color = :red,
+      label = "N", linealpha = 0.3, fillalpha = 0.2)
+```
+
+
 
 ```{r}
 # sanity check
